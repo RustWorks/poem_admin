@@ -2,7 +2,7 @@
 
 pub mod prelude;
 
-pub mod seaql_migrations;
+pub mod sys_api_db;
 pub mod sys_dept;
 pub mod sys_dict_data;
 pub mod sys_dict_type;

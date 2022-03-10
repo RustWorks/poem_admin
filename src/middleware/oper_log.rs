@@ -57,35 +57,31 @@ impl<E: Endpoint> Endpoint for OperLogEndpoint<E> {
                     Some(x) => x.0.clone(),
                     None => "".to_string(),
                 };
-                tokio::spawn(async move {
-                    oper_log_add(req_ctx, res_ctx, "1".to_string(), "".to_string(), duration)
-                        .await
-                        .expect("oper_log_add_err");
-                });
-
+                oper_log_add(req_ctx, res_ctx, "1".to_string(), "".to_string(), duration).await;
                 Ok(res)
             }
             Err(e) => {
                 let ee = e.to_string();
-                tokio::spawn(async move {
-                    oper_log_add(req_ctx, "".to_string(), "0".to_string(), ee, duration)
-                        .await
-                        .expect("oper_log_add_err");
-                });
+                oper_log_add(req_ctx, "".to_string(), "0".to_string(), ee, duration).await;
                 Err(e)
             }
         }
     }
 }
 
+pub async fn oper_log_add(req: ReqCtx, res: String, status: String, err_msg: String, duration: Duration) {
+    tokio::spawn(async move {
+        match oper_log_add_fn(req, res, status, err_msg, duration).await {
+            Ok(_) => {}
+            Err(e) => {
+                tracing::info!("日志添加失败：{}", e.to_string());
+            }
+        };
+    });
+}
+
 /// add 添加
-pub async fn oper_log_add(
-    req: ReqCtx,
-    res: String,
-    status: String,
-    err_msg: String,
-    duration: Duration,
-) -> Result<()> {
+pub async fn oper_log_add_fn(req: ReqCtx, res: String, status: String, err_msg: String, duration: Duration) -> Result<()> {
     if !CFG.log.enable_oper_log {
         return Ok(());
     }
@@ -95,21 +91,27 @@ pub async fn oper_log_add(
     let res_data = res.clone();
     let err_msg_data = err_msg.clone();
     let duration_data = duration;
-    tokio::spawn(async move {
-        tracing::info!(
-            "\n请求路径:{:?}\n完成时间:{:?}\n消耗时间:{:?}微秒 | {:?}毫秒\n请求数据:{:?}\n响应数据:{}\n错误信息:{:?}\n",
-            req_data.path.clone(),
-            now,
-            duration_data.as_micros(),duration_data.as_millis(),
-            req_data,
-            res_data,
-            err_msg_data,
-        );
-    });
-    // 当记录日志为操作日志，而且为GET请求时，不记录日志,否则数据要爆炸
-    if req.path.clone().contains("oper_log") && req.method.clone() == "GET" {
+    tracing::info!(
+        "\n请求路径:{:?}\n完成时间:{:?}\n消耗时间:{:?}微秒 | {:?}毫秒\n请求数据:{:?}\n响应数据:{}\n错误信息:{:?}\n",
+        req_data.path.clone(),
+        now,
+        duration_data.as_micros(),
+        duration_data.as_millis(),
+        req_data,
+        res_data,
+        err_msg_data,
+    );
+    //  判断是否要记录日志
+    let apis = ALL_APIS.lock().await;
+    let (api_name, is_log) = match apis.get(&req.path) {
+        Some(x) => (x.name.clone(), x.is_log),
+        None => ("".to_string(), true),
+    };
+    drop(apis);
+    if !is_log {
         return Ok(());
     }
+
     let d = duration.as_micros() as i64;
 
     let db = DB.get_or_init(db_conn).await;
@@ -128,12 +130,6 @@ pub async fn oper_log_add(
         "DELETE" => "4", // 删除
         _ => "0",        // 其他
     };
-    let all_apis = ALL_APIS.lock().await;
-    let req_path = req.path.as_str().replacen('/', "", 1);
-    let api_name = all_apis
-        .get(&req_path)
-        .unwrap_or(&("".to_string()))
-        .to_string();
 
     let add_data = sys_oper_log::ActiveModel {
         oper_id: Set(scru128::scru128_string()),
@@ -148,26 +144,15 @@ pub async fn oper_log_add(
         oper_url: Set(req.ori_uri),
         oper_ip: Set(user.ipaddr),
         oper_location: Set(user.login_location),
-        oper_param: Set(if req.data.len() > 1000 {
-            req.data.split_at(1000).0.to_string()
-        } else {
-            req.data
-        }),
-        json_result: Set(if res.len() > 10000 {
-            res.split_at(10000).0.to_string()
-        } else {
-            res
-        }),
+        oper_param: Set(if req.data.len() > 1000 { req.data.split_at(1000).0.to_string() } else { req.data }),
+        json_result: Set(if res.len() > 10000 { res.split_at(10000).0.to_string() } else { res }),
         path_param: Set(req.path_params),
         status: Set(status),
         error_msg: Set(err_msg),
         duration: Set(d),
         oper_time: Set(now),
     };
-    SysOperLog::insert(add_data)
-        .exec(db)
-        .await
-        .expect("oper_log_add error");
+    SysOperLog::insert(add_data).exec(db).await.expect("oper_log_add error");
 
     Ok(())
 }

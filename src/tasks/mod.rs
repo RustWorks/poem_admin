@@ -2,8 +2,9 @@ mod task;
 mod task_builder;
 mod task_runner;
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
+use ahash::AHashMap as HashMap;
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
 use db::{db_conn, system::SysJobModel, DB};
@@ -79,12 +80,13 @@ pub async fn run_circles_task(job_id: String) -> Result<()> {
     Ok(())
 }
 
-// pub async fn update_circles_task(job_id: String) -> Result<()> {
-//     let db = DB.get_or_init(db_conn).await;
-//     let t = match system::get_job_by_id(db, job_id).await {
-//         Ok(x) => x,
-//         Err(e) => return Err(anyhow!("{:#?}", e)),
-//     };
-//     task_runner::update_circles_task(t).await?;
-//     Ok(())
-// }
+pub async fn update_circles_task(job_id: String) -> Result<()> {
+    let db = DB.get_or_init(db_conn).await;
+    let t = match system::get_job_by_id(db, job_id).await {
+        Ok(x) => x,
+        Err(e) => return Err(anyhow!("{:#?}", e)),
+    };
+    tracing::info!("开始更新任务 {}", &t.job_name);
+    task_runner::update_circles_task(t).await?;
+    Ok(())
+}

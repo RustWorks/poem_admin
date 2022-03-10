@@ -8,29 +8,30 @@ pub struct Entity;
 
 impl EntityName for Entity {
     fn table_name(&self) -> &str {
-        "seaql_migrations"
+        "sys_api_db"
     }
 }
 
 #[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel, Serialize, Deserialize)]
 pub struct Model {
-    pub version: String,
-    pub applied_at: i64,
+    pub api_id: String,
+    pub db: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
-    Version,
-    AppliedAt,
+    ApiId,
+    Db,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
 pub enum PrimaryKey {
-    Version,
+    ApiId,
+    Db,
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
-    type ValueType = String;
+    type ValueType = (String, String);
     fn auto_increment() -> bool {
         false
     }
@@ -43,8 +44,8 @@ impl ColumnTrait for Column {
     type EntityName = Entity;
     fn def(&self) -> ColumnDef {
         match self {
-            Self::Version => ColumnType::String(Some(255u32)).def(),
-            Self::AppliedAt => ColumnType::BigInteger.def(),
+            Self::ApiId => ColumnType::String(Some(32u32)).def(),
+            Self::Db => ColumnType::String(Some(32u32)).def(),
         }
     }
 }

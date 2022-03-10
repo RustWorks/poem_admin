@@ -6,23 +6,19 @@ use db::{
     common::res::{ListData, PageParams},
     system::{
         entities::{
-            prelude::{SysRole, SysRoleDept},
-            sys_role, sys_role_dept, sys_user,
+            prelude::{SysRole, SysRoleDept, SysUserRole},
+            sys_role, sys_role_dept, sys_user, sys_user_role,
         },
         models::{
             sys_menu::MenuResp,
-            sys_role::{
-                AddOrCancelAuthRoleReq, AddReq, DataScopeReq, DeleteReq, EditReq, Resp, SearchReq,
-                StatusReq,
-            },
+            sys_role::{AddOrCancelAuthRoleReq, AddReq, DataScopeReq, DeleteReq, EditReq, Resp, SearchReq, StatusReq},
             sys_role_api,
         },
     },
 };
 use sea_orm::{
-    sea_query::Expr, ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection,
-    DatabaseTransaction, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
-    TransactionTrait, Value,
+    sea_query::Expr, ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DatabaseTransaction, EntityTrait, JoinType, PaginatorTrait, QueryFilter, QueryOrder,
+    QuerySelect, Set, TransactionTrait, Value,
 };
 // use sea_orm_casbin_adapter::casbin::MgmtApi;
 
@@ -31,11 +27,7 @@ use sea_orm::{
 /// get_list 获取列表
 /// page_params 分页参数
 /// db 数据库连接 使用db.0
-pub async fn get_sort_list(
-    db: &DatabaseConnection,
-    page_params: PageParams,
-    req: SearchReq,
-) -> Result<ListData<sys_role::Model>> {
+pub async fn get_sort_list(db: &DatabaseConnection, page_params: PageParams, req: SearchReq) -> Result<ListData<sys_role::Model>> {
     let page_num = page_params.page_num.unwrap_or(1);
     let page_per_size = page_params.page_size.unwrap_or(10);
     //  生成查询条件
@@ -100,20 +92,13 @@ pub async fn add(db: &DatabaseConnection, req: AddReq, user_id: &str) -> Result<
 }
 
 // 组合角色数据
-pub async fn get_permissions_data<C>(
-    db: &C,
-    role_id: String,
-    menu_ids: Vec<String>,
-) -> Result<Vec<sys_role_api::AddReq>>
+pub async fn get_permissions_data<C>(db: &C, role_id: String, menu_ids: Vec<String>) -> Result<Vec<sys_role_api::AddReq>>
 where
     C: TransactionTrait + ConnectionTrait,
 {
     // 获取全部菜单
-    let menus = super::sys_menu::get_all(db).await?;
-    let menu_map = menus
-        .iter()
-        .map(|x| (x.id.clone(), x.clone()))
-        .collect::<HashMap<String, MenuResp>>();
+    let menus = super::sys_menu::get_enabled_menus(db, false).await?;
+    let menu_map = menus.iter().map(|x| (x.id.clone(), x.clone())).collect::<HashMap<String, MenuResp>>();
     // 组装角色权限数据
     let mut res: Vec<sys_role_api::AddReq> = Vec::new();
     for menu_id in menu_ids {
@@ -200,12 +185,7 @@ pub async fn delete(db: &DatabaseConnection, delete_req: DeleteReq) -> Result<St
     }
 }
 
-pub async fn eidt_check_data_is_exist(
-    db: &DatabaseConnection,
-    role_id: String,
-    role_name: String,
-    role_key: String,
-) -> Result<bool> {
+pub async fn eidt_check_data_is_exist(db: &DatabaseConnection, role_id: String, role_name: String, role_key: String) -> Result<bool> {
     let c1 = SysRole::find()
         .filter(sys_role::Column::RoleName.eq(role_name))
         .filter(sys_role::Column::RoleId.ne(role_id.clone()))
@@ -223,14 +203,7 @@ pub async fn eidt_check_data_is_exist(
 // 编辑用户角色
 pub async fn edit(db: &DatabaseConnection, req: EditReq, created_by: &str) -> Result<String> {
     //  检查字典类型是否存在
-    if eidt_check_data_is_exist(
-        db,
-        req.clone().role_id,
-        req.clone().role_name,
-        req.clone().role_key,
-    )
-    .await?
-    {
+    if eidt_check_data_is_exist(db, req.clone().role_id, req.clone().role_name, req.clone().role_key).await? {
         return Err(anyhow!("数据已存在"));
     }
     // 开启事务
@@ -269,59 +242,6 @@ pub async fn edit(db: &DatabaseConnection, req: EditReq, created_by: &str) -> Re
     Ok("角色数据更新成功".to_string())
 }
 
-// edit 修改
-// pub async fn edit(db: &DatabaseConnection, req: EditReq) -> Result<String> {
-//     //  检查字典类型是否存在
-//     if eidt_check_data_is_exist(
-//         db,
-//         req.clone().role_id,
-//         req.clone().role_name,
-//         req.clone().role_key,
-//     )
-//     .await?
-//     {
-//         return Err(anyhow!("数据已存在",
-// StatusCode::BAD_REQUEST));     }
-//     // 开启事务
-//     let txn = db.begin().await?;
-//     // 修改数据
-//     let uid = req.role_id;
-//     let s_s = SysRole::find_by_id(uid.clone())
-//         .one(&txn)
-//         .await
-//         ?;
-//     let s_r: sys_role::ActiveModel = s_s.unwrap().into();
-//     let now: NaiveDateTime = Local::now().naive_local();
-//     let act = sys_role::ActiveModel {
-//         role_name: Set(req.role_name),
-//         role_key: Set(req.role_key),
-//         data_scope: Set(req.data_scope),
-//         list_order: Set(req.list_order),
-//         status: Set(req.status),
-//         remark: Set(req.remark),
-//         updated_at: Set(Some(now)),
-//         ..s_r
-//     };
-//     // 更新 //这个两种方式一样 都要多查询一次
-//     act.update(&txn).await?;
-
-//     // 获取组合角色权限数据
-//     let permissions = self::get_permissions_data(&txn, uid.clone(),
-// req.menu_ids.clone()).await?;     let mut e = get_enforcer(false).await;
-
-//     // 删除全部权限 按角色id删除
-//     e.remove_filtered_policy(0, vec![uid.clone()])
-//         .await
-//         ?;
-//     // 添加角色权限数据
-//     e.add_policies(permissions).await?;
-
-//     // 提交事务
-//     txn.commit().await?;
-
-//     Ok(format!("用户<{}>数据更新成功", uid))
-// }
-
 // set_status 状态修改
 pub async fn set_status(db: &DatabaseConnection, status_req: StatusReq) -> Result<String> {
     // 开启事务
@@ -329,18 +249,6 @@ pub async fn set_status(db: &DatabaseConnection, status_req: StatusReq) -> Resul
     // 修改数据
     let uid = status_req.role_id;
     let now: NaiveDateTime = Local::now().naive_local();
-    // let s_s = SysRole::find_by_id(uid.clone())
-    //     .one(&txn)
-    //     .await
-    //     ?;
-    // let s_r: sys_role::ActiveModel = s_s.unwrap().into();
-
-    // let act = sys_role::ActiveModel {
-    //     status: Set(status_req.status),
-    //     updated_at: Set(Some(now)),
-    //     ..s_r
-    // };
-    // act.update(&txn).await?;
     SysRole::update_many()
         .col_expr(sys_role::Column::Status, Expr::value(status_req.status))
         .col_expr(sys_role::Column::UpdatedAt, Expr::value(now))
@@ -372,10 +280,7 @@ pub async fn set_data_scope(db: &DatabaseConnection, req: DataScopeReq) -> Resul
     // 当数据权限为自定义数据时，删除全部权限，重新添加部门权限
     if data_scope == "2" {
         // 删除全部部门权限
-        SysRoleDept::delete_many()
-            .filter(sys_role_dept::Column::RoleId.eq(uid.clone()))
-            .exec(&txn)
-            .await?;
+        SysRoleDept::delete_many().filter(sys_role_dept::Column::RoleId.eq(uid.clone())).exec(&txn).await?;
         // 添加部门权限
         let mut act_datas: Vec<sys_role_dept::ActiveModel> = Vec::new();
         for dept in req.dept_ids {
@@ -393,7 +298,7 @@ pub async fn set_data_scope(db: &DatabaseConnection, req: DataScopeReq) -> Resul
     return Ok(format!("用户<{}>数据更新成功", uid));
 }
 
-/// get_user_by_id 获取用户Id获取用户   
+/// get_user_by_id 获取用户Id获取用户
 /// db 数据库连接 使用db.0
 pub async fn get_by_id(db: &DatabaseConnection, req: SearchReq) -> Result<Resp> {
     let mut s = SysRole::find();
@@ -412,7 +317,7 @@ pub async fn get_by_id(db: &DatabaseConnection, req: SearchReq) -> Result<Resp> 
     Ok(res)
 }
 
-/// get_all 获取全部   
+/// get_all 获取全部
 /// db 数据库连接 使用db.0
 pub async fn get_all(db: &DatabaseConnection) -> Result<Vec<Resp>> {
     let s = SysRole::find()
@@ -425,85 +330,37 @@ pub async fn get_all(db: &DatabaseConnection) -> Result<Vec<Resp>> {
 }
 
 //  获取用户角色
-pub async fn get_all_admin_role(
-    db: &DatabaseConnection,
-    user_id: &str,
-    all_roles: Vec<Resp>,
-) -> Result<Vec<Resp>> {
-    let user_id = user_id.trim();
-    let role_ids = super::sys_user_role::get_role_ids_by_user_id(db, user_id).await?;
-    let roles = all_roles
-        .into_iter()
-        .filter(|x| role_ids.contains(&x.role_id))
-        .collect::<Vec<Resp>>();
-    Ok(roles)
+pub async fn get_all_admin_role(db: &DatabaseConnection, user_id: &str) -> Result<Vec<String>> {
+    let s = SysUserRole::find()
+        .join_rev(
+            JoinType::LeftJoin,
+            sys_user::Entity::belongs_to(sys_user_role::Entity)
+                .from(sys_user::Column::Id)
+                .to(sys_user_role::Column::UserId)
+                .into(),
+        )
+        // .select_with(sys_user_role::Entity)
+        .filter(sys_user::Column::Id.eq(user_id))
+        .all(db)
+        .await?;
+    let res = s.iter().map(|x| x.role_id.clone()).collect::<Vec<String>>();
+    Ok(res)
 }
 
 pub async fn get_current_admin_role(db: &DatabaseConnection, user_id: &str) -> Result<String> {
     let user = super::sys_user::get_by_id(db, user_id).await?;
-    let res = match user.role_id {
+    let res = match user.user.role_id {
         Some(x) => x,
         None => "".to_string(),
     };
     Ok(res)
 }
 
-//  获取用户角色ids
-// pub async fn get_role_ids_by_user_id(user_id: &str) -> Vec<String> {
-//     let user_id = user_id.trim();
-//     // 查询角色关联规则
-
-//     let e = get_enforcer(false).await;
-//     let group_policy = e.get_filtered_grouping_policy(0,
-// vec![user_id.to_string()]);     let mut role_ids = vec![];
-//     if !group_policy.is_empty() {
-//         for p in group_policy {
-//             role_ids.push(p[1].clone());
-//         }
-//     }
-//     role_ids
-// }
-
-//  获取角色的所有用户
-// pub async fn get_auth_users_by_role_id(role_id: &str) -> Vec<String> {
-//     let role_id = role_id.trim();
-//     // 查询角色关联规则
-//     let e = get_enforcer(false).await;
-//     let group_policy = e.get_filtered_grouping_policy(1,
-// vec![role_id.to_string()]);     let mut user_ids = vec![];
-//     if !group_policy.is_empty() {
-//         for p in group_policy {
-//             user_ids.push(p[0].clone());
-//         }
-//     }
-//     user_ids
-// }
-
-// pub async fn delete_role_by_user_id(user_id: &str) -> Result<()> {
-//     let user_id = user_id.trim();
-//     let mut e = get_enforcer(false).await;
-//     // 1. 先删除用户角色关联
-//     e.remove_filtered_named_policy("g", 0, vec![user_id.to_string()])
-//         .await
-//         ?;
-//     Ok(())
-// }
-
-// ---------------------
-
-pub async fn get_auth_users_by_role_id(
-    db: &DatabaseConnection,
-    role_id: &str,
-) -> Result<Vec<String>> {
+pub async fn get_auth_users_by_role_id(db: &DatabaseConnection, role_id: &str) -> Result<Vec<String>> {
     super::sys_user_role::get_user_ids_by_role_id(db, role_id).await
 }
 
-pub async fn add_role_by_user_id(
-    db: &DatabaseConnection,
-    user_id: &str,
-    role_ids: Vec<String>,
-    created_by: String,
-) -> Result<()> {
+pub async fn add_role_by_user_id(db: &DatabaseConnection, user_id: &str, role_ids: Vec<String>, created_by: String) -> Result<()> {
     let txn = db.begin().await?;
     super::sys_user_role::delete_user_role(&txn, user_id).await?;
     super::sys_user_role::edit_user_role(&txn, user_id, role_ids, created_by).await?;
@@ -511,12 +368,7 @@ pub async fn add_role_by_user_id(
     Ok(())
 }
 
-pub async fn add_role_with_user_ids(
-    db: &DatabaseConnection,
-    user_ids: Vec<String>,
-    role_id: String,
-    created_by: String,
-) -> Result<()> {
+pub async fn add_role_with_user_ids(db: &DatabaseConnection, user_ids: Vec<String>, role_id: String, created_by: String) -> Result<()> {
     let txn = db.begin().await?;
     super::sys_user_role::add_role_by_lot_user_ids(&txn, user_ids, role_id, created_by).await?;
     txn.commit().await?;
@@ -525,12 +377,7 @@ pub async fn add_role_with_user_ids(
 
 pub async fn cancel_auth_user(db: &DatabaseConnection, req: AddOrCancelAuthRoleReq) -> Result<()> {
     let txn = db.begin().await?;
-    super::sys_user_role::delete_user_role_by_user_ids(
-        &txn,
-        req.clone().user_ids,
-        Some(req.role_id.clone()),
-    )
-    .await?;
+    super::sys_user_role::delete_user_role_by_user_ids(&txn, req.clone().user_ids, Some(req.role_id.clone())).await?;
     // 如果用户取消了该角色授权，设置用户该角色为null
     sys_user::Entity::update_many()
         .col_expr(sys_user::Column::RoleId, Expr::value(Value::String(None)))
@@ -541,48 +388,3 @@ pub async fn cancel_auth_user(db: &DatabaseConnection, req: AddOrCancelAuthRoleR
     txn.commit().await?;
     Ok(())
 }
-
-//  添加多个用户到一个角色
-// pub async fn add_role_with_user_ids(user_ids: Vec<String>, role_id: String)
-// -> Result<()> {     let mut e = get_enforcer(false).await;
-//     //  添加用户角色关联
-//     let mut policies: Vec<Vec<String>> = Vec::new();
-//     for user_id in user_ids {
-//         policies.push(vec![user_id.to_string(), role_id.clone()]);
-//     }
-//     e.add_grouping_policies(policies)
-//         .await
-//         ?;
-//     Ok(())
-// }
-
-// pub async fn cancel_auth_user(req: AddOrCancelAuthRoleReq) -> Result<()> {
-//     let mut e = get_enforcer(false).await;
-//     // 1. 先删除用户角色关联
-//     for user_id in req.clone().user_ids {
-//         e.remove_filtered_named_policy("g", 0, vec![user_id,
-// req.clone().role_id])             .await
-//             ?;
-//     }
-
-//     Ok(())
-// }
-
-//  为用户授权角色 先删除 再添加
-// pub async fn add_role_by_user_id(user_id: &str, role_ids: Vec<String>) ->
-// Result<()> {     let user_id = user_id.trim();
-//     let mut e = get_enforcer(false).await;
-//     // 1. 先删除用户角色关联
-//     e.remove_filtered_named_policy("g", 0, vec![user_id.to_string()])
-//         .await
-//         ?;
-//     // 2. 添加用户角色关联
-//     let mut policies: Vec<Vec<String>> = Vec::new();
-//     for p in role_ids {
-//         policies.push(vec![user_id.to_string(), p.clone()]);
-//     }
-//     e.add_grouping_policies(policies)
-//         .await
-//         ?;
-//     Ok(())
-// }

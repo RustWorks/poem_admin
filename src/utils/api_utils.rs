@@ -1,27 +1,41 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
-use db::{db_conn, system::entities::sys_role_api, DB};
+use ahash::AHashMap as HashMap;
+use db::{common::ctx::ApiInfo, db_conn, system::entities::sys_role_api, DB};
 use once_cell::sync::Lazy;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, TransactionTrait};
 use tokio::sync::Mutex;
 use tracing::info;
 
 use crate::apps::system;
 
-pub static ALL_APIS: Lazy<Arc<Mutex<HashMap<String, String>>>> = Lazy::new(|| {
-    let apis: HashMap<String, String> = HashMap::new();
+pub static ALL_APIS: Lazy<Arc<Mutex<HashMap<String, ApiInfo>>>> = Lazy::new(|| {
+    let apis: HashMap<String, ApiInfo> = HashMap::new();
     Arc::new(Mutex::new(apis))
 });
 
 pub async fn init_all_api() {
-    let db = DB.get_or_init(db_conn).await;
-    let res = system::get_all_sys_menu(db).await;
+    api_init_func().await;
+}
+
+pub async fn re_init_all_api() {
     let mut apis = ALL_APIS.lock().await;
+    apis.clear();
+    drop(apis);
+    api_init_func().await;
+}
+
+async fn api_init_func() {
+    let db = DB.get_or_init(db_conn).await;
+    let res = system::get_all_sys_menu(db, false).await;
     match res {
         Ok(menus) => {
             for menu in menus {
-                apis.insert(menu.api.clone(), menu.menu_name.clone());
+                self::add_api(db, &menu.id, &menu.api, &menu.menu_name, &menu.is_db_cache, &menu.is_log).await;
             }
+            let apis = ALL_APIS.lock().await;
+            info!("初始化时获取路由API成功:{:?}", apis);
+            drop(apis);
         }
         Err(e) => {
             info!("初始化时获取路由API失败:{:#?}", e)
@@ -29,19 +43,44 @@ pub async fn init_all_api() {
     }
 }
 
-pub async fn add_api(api: &str, menu_name: &str) {
+pub async fn add_api<C>(db: &C, api_id: &str, api: &str, menu_name: &str, is_db_cache: &str, is_log: &str)
+where
+    C: TransactionTrait + ConnectionTrait,
+{
+    let related_api = match system::get_related_api_by_db_name(db, api_id).await {
+        Ok(x) => Some(x),
+        Err(e) => {
+            info!("{}", e);
+            None
+        }
+    };
+
+    let api_info = ApiInfo {
+        name: menu_name.to_string(),
+        related_api,
+        is_db_cache: is_db_cache == "1",
+        is_log: is_log == "1",
+    };
     let mut apis = ALL_APIS.lock().await;
-    apis.insert(api.to_string(), menu_name.to_string());
+    apis.entry(api.to_string())
+        .and_modify(|x| {
+            *x = api_info.clone();
+        })
+        .or_insert(api_info);
+    drop(apis)
 }
 
 pub async fn remove_api(api: &str) {
     let mut apis = ALL_APIS.lock().await;
     apis.remove(api);
+    drop(apis)
 }
 
 pub async fn is_in(api: &str) -> bool {
     let apis = ALL_APIS.lock().await;
-    apis.get(api).is_some()
+    let res = apis.get(api).is_some();
+    drop(apis);
+    res
 }
 
 pub async fn check_api_permission(api: &str, method: &str) -> bool {
@@ -59,14 +98,3 @@ pub async fn check_api_permission(api: &str, method: &str) -> bool {
         }
     }
 }
-
-// pub async fn check_api_permission(api: &str, method: &str) -> bool {
-//     let e = super::get_enforcer(false).await;
-//     match e.enforce((api, method)) {
-//         Ok(_) => true,
-//         Err(err) => {
-//             info!("检查权限失败:{:#?}", err);
-//             false
-//         }
-//     }
-// }

@@ -19,10 +19,7 @@ use crate::utils::jwt::Claims;
 
 /// get_all_menu_tree 获取全部菜单
 #[handler]
-pub async fn get_sort_list(
-    Query(page_params): Query<PageParams>,
-    Query(search_req): Query<SearchReq>,
-) -> Res<ListData<sys_menu::Model>> {
+pub async fn get_sort_list(Query(page_params): Query<PageParams>, Query(search_req): Query<SearchReq>) -> Res<ListData<sys_menu::Model>> {
     let db = DB.get_or_init(db_conn).await;
     let res = service::sys_menu::get_sort_list(db, page_params, search_req).await;
     match res {
@@ -32,10 +29,7 @@ pub async fn get_sort_list(
 }
 
 #[handler]
-pub async fn get_auth_list(
-    Query(page_params): Query<PageParams>,
-    Query(search_req): Query<SearchReq>,
-) -> Res<ListData<sys_menu::Model>> {
+pub async fn get_auth_list(Query(page_params): Query<PageParams>, Query(search_req): Query<SearchReq>) -> Res<ListData<sys_menu::Model>> {
     let db = DB.get_or_init(db_conn).await;
     let res = service::sys_menu::get_auth_list(db, page_params, search_req).await;
     match res {
@@ -44,7 +38,7 @@ pub async fn get_auth_list(
     }
 }
 
-/// get_user_by_id 获取用户Id获取用户   
+/// get_user_by_id 获取用户Id获取用户
 /// db 数据库连接 使用db.0
 #[handler]
 pub async fn get_by_id(Query(search_req): Query<SearchReq>) -> Res<MenuResp> {
@@ -103,9 +97,9 @@ pub async fn edit(Json(edit_req): Json<EditReq>) -> Res<String> {
 
 /// get_all_menu_tree 获取全部菜单树
 #[handler]
-pub async fn get_all_menu_tree() -> Res<Vec<SysMenuTree>> {
+pub async fn get_all_enabled_menu_tree() -> Res<Vec<SysMenuTree>> {
     let db = DB.get_or_init(db_conn).await;
-    let res = service::sys_menu::get_all_menu_tree(db).await;
+    let res = service::sys_menu::get_all_enabled_menu_tree(db).await;
     match res {
         Ok(x) => Res::with_data(x),
         Err(e) => Res::with_err(&e.to_string()),

@@ -65,12 +65,10 @@ pub enum Column {
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
 pub enum PrimaryKey {
     JobId,
-    JobName,
-    JobGroup,
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
-    type ValueType = (String, String, String);
+    type ValueType = String;
     fn auto_increment() -> bool {
         false
     }
@@ -96,7 +94,7 @@ impl ColumnTrait for Column {
             Self::Concurrent => ColumnType::Char(Some(1u32)).def().null(),
             Self::Status => ColumnType::Char(Some(1u32)).def(),
             Self::CreateBy => ColumnType::String(Some(32u32)).def(),
-            Self::UpdateBy => ColumnType::Char(Some(32u32)).def().null(),
+            Self::UpdateBy => ColumnType::String(Some(32u32)).def().null(),
             Self::Remark => ColumnType::Text.def().null(),
             Self::LastTime => ColumnType::DateTime.def().null(),
             Self::NextTime => ColumnType::DateTime.def().null(),

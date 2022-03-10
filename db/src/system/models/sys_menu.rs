@@ -9,6 +9,7 @@ pub struct SearchReq {
     #[validate(length(min = 1))]
     pub menu_name: Option<String>,
     pub menu_type: Option<String>,
+    pub method: Option<String>,
     pub status: Option<String>,
     pub begin_time: Option<String>,
     pub end_time: Option<String>,
@@ -32,6 +33,8 @@ pub struct MenuResp {
     pub is_frame: String,
     pub is_cache: String,
     pub is_data_scope: String,
+    pub is_log: String,
+    pub is_db_cache: String,
     pub remark: String,
 }
 
@@ -59,7 +62,7 @@ pub struct Meta {
     pub hidden: bool,
 }
 
-#[derive(Serialize, Clone, Validate, Debug, Default)]
+#[derive(Serialize, Clone, Debug, Default)]
 pub struct SysMenuTree {
     #[serde(flatten)]
     pub user_menu: UserMenu,
@@ -83,6 +86,8 @@ pub struct AddReq {
     pub is_frame: String,
     pub is_cache: String,
     pub is_data_scope: String,
+    pub is_log: String,
+    pub is_db_cache: String,
     pub remark: String,
 }
 
@@ -109,5 +114,7 @@ pub struct EditReq {
     pub is_frame: String,
     pub is_cache: String,
     pub is_data_scope: String,
+    pub is_log: String,
+    pub is_db_cache: String,
     pub remark: String,
 }

@@ -6,18 +6,11 @@ use db::{
         models::sys_job_log::{AddReq, DeleteReq, SearchReq},
     },
 };
-use sea_orm::{
-    ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
-    QueryOrder, Set, TransactionTrait,
-};
+use sea_orm::{sea_query::Table, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set, TransactionTrait};
 /// get_list 获取列表
 /// page_params 分页参数
 /// db 数据库连接 使用db.0
-pub async fn get_sort_list(
-    db: &DatabaseConnection,
-    page_params: PageParams,
-    req: SearchReq,
-) -> Result<ListData<sys_job_log::Model>> {
+pub async fn get_sort_list(db: &DatabaseConnection, page_params: PageParams, req: SearchReq) -> Result<ListData<sys_job_log::Model>> {
     let page_num = page_params.page_num.unwrap_or(1);
     let page_per_size = page_params.page_size.unwrap_or(10);
     //  生成查询条件
@@ -122,25 +115,29 @@ pub async fn delete(db: &DatabaseConnection, delete_req: DeleteReq) -> Result<St
 
 /// delete 完全删除
 pub async fn clean(db: &DatabaseConnection, job_id: String) -> Result<String> {
-    let mut s = SysJobLog::delete_many();
-    s = s.filter(sys_job_log::Column::JobId.eq(job_id));
-    // 开始删除
-    let d = s.exec(db).await.map_err(|e| anyhow!(e.to_string(),))?;
-    match d.rows_affected {
-        // 0 => return Err("你要删除的字典类型不存在".into()),
-        0 => Err(anyhow!("你要删除的日志不存在".to_string(),)),
+    if job_id.is_empty() {
+        let stmt = Table::truncate().table(sys_job_log::Entity).to_owned();
+        let db_backend = db.get_database_backend();
+        db.execute(db_backend.build(&stmt)).await?;
+        return Ok("定时任务日志清空成功".to_string());
+    } else {
+        let mut s = SysJobLog::delete_many();
+        s = s.filter(sys_job_log::Column::JobId.eq(job_id));
+        // 开始删除
+        let d = s.exec(db).await.map_err(|e| anyhow!(e.to_string(),))?;
+        return match d.rows_affected {
+            // 0 => return Err("你要删除的字典类型不存在".into()),
+            0 => Err(anyhow!("你要删除的日志不存在".to_string(),)),
 
-        i => Ok(format!("成功删除{}条数据", i)),
-    }
+            i => Ok(format!("成功删除{}条数据", i)),
+        };
+    };
 }
 
-/// get_user_by_id 获取用户Id获取用户   
+/// get_user_by_id 获取用户Id获取用户
 /// db 数据库连接 使用db.0
 pub async fn get_by_id(db: &DatabaseConnection, job_log_id: String) -> Result<sys_job_log::Model> {
-    let s = SysJobLog::find()
-        .filter(sys_job_log::Column::JobLogId.eq(job_log_id))
-        .one(db)
-        .await?;
+    let s = SysJobLog::find().filter(sys_job_log::Column::JobLogId.eq(job_log_id)).one(db).await?;
 
     let res = match s {
         Some(m) => m,

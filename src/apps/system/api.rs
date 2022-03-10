@@ -1,5 +1,6 @@
 use poem::{delete, get, post, put, Route};
 mod common;
+mod sys_api_db;
 mod sys_dept;
 mod sys_dict_data;
 mod sys_dict_type;
@@ -32,20 +33,26 @@ pub fn system_api() -> Route {
         .nest("/job", sys_job_api()) // 定时任务
         .nest("/job_log", sys_job_log_api()) // 定时任务日志
         .nest("/oper_log", sys_oper_log_api()) // 操作日志
+        .nest("/api_db", sys_api_db_api()) // 操作日志
+        .nest("/monitor", sys_monitor_api()) // 操作日志
 }
 
 fn sys_user_api() -> Route {
     Route::new()
         .at("/list", get(sys_user::get_sort_list)) // 获取全部用户
         .at("/get_by_id", get(sys_user::get_by_id)) // 按id获取用户
+        .at("/get_profile", get(sys_user::get_profile)) // 按当前获取用户信息
+        .at("/update_profile", put(sys_user::update_profile)) // 更新用户信息
         .at("/add", post(sys_user::add)) // 添加用户
         .at("/edit", put(sys_user::edit)) // 更新用户
         .at("/delete", delete(sys_user::delete)) // 硬删除用户
         .at("/get_info", get(sys_user::get_info)) // 获取用户信息
         .at("/reset_passwd", put(sys_user::reset_passwd)) // 重置密码
+        .at("/update_passwd", put(sys_user::update_passwd)) // 重置密码
         .at("/change_status", put(sys_user::change_status)) // 修改状态
         .at("/change_role", put(sys_user::change_role)) // 切换角色
         .at("/fresh_token", put(sys_user::fresh_token)) // 修改状态
+        .at("/update_avatar", post(sys_user::update_avatar)) // 修改头像
 }
 
 fn sys_dict_type_api() -> Route {
@@ -107,25 +114,20 @@ fn sys_role_api() -> Route {
         .at("/get_role_dept", get(sys_role::get_role_dept)) // 获取角色部门
         .at("/cancel_auth_user", put(sys_role::cancel_auth_user)) // 批量用户取消角色授权
         .at("/add_auth_user", put(sys_role::add_auth_user)) // 批量用户角色授权
-        .at(
-            "/get_auth_users_by_role_id",
-            get(sys_role::get_auth_users_by_role_id),
-        ) // 获取角色对应用户
-        .at(
-            "/get_un_auth_users_by_role_id",
-            get(sys_role::get_un_auth_users_by_role_id),
-        ) // 获取角色对应未授权用户
+        .at("/get_auth_users_by_role_id", get(sys_role::get_auth_users_by_role_id)) // 获取角色对应用户
+        .at("/get_un_auth_users_by_role_id", get(sys_role::get_un_auth_users_by_role_id))
+    // 获取角色对应未授权用户
 }
 
 fn sys_menu_api() -> Route {
     Route::new()
         .at("/list", get(sys_menu::get_sort_list)) // 获取筛选分页
-        .at("/auth_list", get(sys_menu::get_auth_list)) // 权限查询列表
+        .at("/get_auth_list", get(sys_menu::get_auth_list)) // 权限查询列表
         .at("/get_by_id", get(sys_menu::get_by_id)) // 按id获取
         .at("/add", post(sys_menu::add)) // 添加
         .at("/edit", put(sys_menu::edit)) // 更新
         .at("/delete", delete(sys_menu::delete)) // 硬删除
-        .at("/get_all_menu_tree", get(sys_menu::get_all_menu_tree)) // 获取全部路由菜单树
+        .at("/get_all_enabled_menu_tree", get(sys_menu::get_all_enabled_menu_tree)) // 获取全部正常的路由菜单树
         .at("/get_routers", get(sys_menu::get_routers)) // 获取用户菜单树
 }
 fn sys_login_log_api() -> Route {
@@ -154,7 +156,7 @@ fn sys_job_api() -> Route {
 fn sys_job_log_api() -> Route {
     Route::new()
         .at("/list", get(sys_job_log::get_sort_list)) // 获取筛选分页
-        .at("/get_by_id", get(sys_job_log::get_by_id)) // 按id获取
+        // .at("/get_by_id", get(sys_job_log::get_by_id)) // 按id获取
         .at("/clean", delete(sys_job_log::clean)) // 清空
         .at("/delete", delete(sys_job_log::delete)) // 硬删除
 }
@@ -164,4 +166,12 @@ fn sys_oper_log_api() -> Route {
         .at("/get_by_id", get(sys_oper_log::get_by_id)) // 按id获取
         .at("/clean", delete(sys_oper_log::clean)) // 清空
         .at("/delete", delete(sys_oper_log::delete)) // 硬删除
+}
+fn sys_api_db_api() -> Route {
+    Route::new()
+        .at("/get_by_id", get(sys_api_db::get_by_id)) // 按id获取
+        .at("/add", post(sys_api_db::add)) // 添加
+}
+fn sys_monitor_api() -> Route {
+    Route::new().at("/server", get(common::get_server_info)) // 服务器信息
 }
