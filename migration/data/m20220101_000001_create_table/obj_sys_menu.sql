@@ -1,6 +1,6 @@
 /*
 SQLyog Ultimate
-MySQL - 10.6.5-MariaDB-1:10.6.5+maria~focal : Database - wk3
+MySQL - 10.6.5-MariaDB-1:10.6.5+maria~focal : Database - poem_demo
 *********************************************************************
 */
 
@@ -39,11 +39,11 @@ insert  into `sys_menu`(`id`,`pid`,`path`,`menu_name`,`icon`,`menu_type`,`query`
 ('00VRNG2J3461ETB20J4AH78ILE','00UDFVHR632BT4PVUGAO6UOSPN','','登录日志-删除','','F',NULL,61002,'1','system/login-log/delete','DELETE','','1','1','1','1','0','0','登录日志-删除','2022-03-03 09:13:40','2022-03-06 16:36:31',NULL),
 ('00VRNH2NQVNQKUNNPEG24M1S91','00UDFVHR632BT4PVUGAO6UOSPN','','登录日志-清空','','F',NULL,61003,'1','system/login-log/clean','DELETE','','1','1','1','1','0','0','登录日志-清空','2022-03-03 09:14:46','2022-03-06 16:36:39',NULL),
 ('00VRO4RNUAU5I9A2TC2CFS9HN2','00TV8ENLC2DL61K03MS9LT04F3','','用户-查询','','F',NULL,12101,'1','system/user/list','GET','','1','1','1','1','0','0','用户-查询','2022-03-03 09:36:23',NULL,NULL),
-('00VRO6RNKGKJOTJDMDK8JIP6BI','00TV8ENLC2DL61K03MS9LT04F3','','用户-修改','','F',NULL,12102,'1','system/user/edit','POST','','1','1','1','1','0','0','用户-修改','2022-03-03 09:38:34','2022-03-03 18:04:59',NULL),
+('00VRO6RNKGKJOTJDMDK8JIP6BI','00TV8ENLC2DL61K03MS9LT04F3','','用户-修改','','F',NULL,12102,'1','system/user/edit','PUT','','1','1','1','1','0','0','用户-修改','2022-03-03 09:38:34','2022-04-01 14:11:00',NULL),
 ('00VRO7IC5CJ6IVBGV4EJ4GM64A','00TV8ENLC2DL61K03MS9LT04F3','','用户-删除','','F',NULL,12104,'1','system/user/delete','DELETE','','1','1','1','1','0','0','用户-删除','2022-03-03 09:39:20',NULL,NULL),
 ('00VRO8BAO5P72IHJ39N7QCCR04','00TV8ENLC2DL61K03MS9LT04F3','','用户-重置密码','','F',NULL,12105,'1','system/user/reset_passwd','PUT','','1','1','1','1','0','0','用户-重置密码','2022-03-03 09:40:11',NULL,NULL),
 ('00VRO8UU3P5MA05UI4PS3IA6E5','00TV8ENLC2DL61K03MS9LT04F3','','用户-更新密码','','F',NULL,12106,'1','system/user/update_passwd','PUT','','1','1','1','1','0','0','用户-更新密码','2022-03-03 09:40:51',NULL,NULL),
-('00VROAOVVU168UETSA60RASJLK','00VS0T54CT6VS5HMHI7N8SQIEO','','用户-切换角色','','F',NULL,12107,'1','sysreme/user/change_role','PUT','','1','1','1','1','0','0','用户-切换角色','2022-03-03 09:42:50','2022-03-03 15:43:12',NULL),
+('00VROAOVVU168UETSA60RASJLK','00VS0T54CT6VS5HMHI7N8SQIEO','','用户-切换角色','','F',NULL,12107,'1','system/user/change_role','PUT','','1','1','1','1','0','0','用户-切换角色','2022-03-03 09:42:50','2022-03-16 11:43:13',NULL),
 ('00VROBKI69BAES1M38BCRB7F6S','00TV8ENLC2DL61K03MS9LT04F3','','用户-刷新token','','F',NULL,12108,'1','system/user/fresh_token','PUT','','1','1','1','1','0','0','用户-刷新token','2022-03-03 09:43:47','2022-03-03 15:44:12',NULL),
 ('00VROCMVQ29ULNS7AM6MJTR2P9','00TV8ENLC2DL61K03MS9LT04F3','','用户-更新头像','','F',NULL,12109,'1','system/user/update_avatar','POST','','1','1','1','1','0','0','用户-更新头像','2022-03-03 09:44:57',NULL,NULL),
 ('00VROFLOI602D1KINKFHUO2LJR','00TV8ENLC2DL61K03MS9LT04F3','','用户-获取配置','','F',NULL,12110,'1','system/user/get_profile','GET','','1','1','1','1','0','0','用户-获取配置','2022-03-03 09:48:11',NULL,NULL),
@@ -81,13 +81,13 @@ insert  into `sys_menu`(`id`,`pid`,`path`,`menu_name`,`icon`,`menu_type`,`query`
 ('00VRTTQBPBDT7MLGN9844N4QAP','00TV8H55BU243CFAFK9O9GKL5P','','部门管理-新增','','F',NULL,12203,'1','system/dept/add','POST','','1','1','1','1','0','0','部门管理-新增','2022-03-03 12:58:24',NULL,NULL),
 ('00VRTVF09JPILH0UFCF236BOE2','00TV8H55BU243CFAFK9O9GKL5P','','部门管理-编辑','','F',NULL,12204,'1','system/dept/edit','PUT','','1','1','1','1','0','0','部门管理-编辑','2022-03-03 13:00:12',NULL,NULL),
 ('00VRTVSH7U34NHE5IDT7P5A6UF','00TV8H55BU243CFAFK9O9GKL5P','','部门管理-删除','','F',NULL,12205,'1','system/dept/delete','DELETE','','1','1','1','1','0','0','部门管理-删除','2022-03-03 13:00:39',NULL,NULL),
-('00VRU0G3MI3LU7TFKJ08OQIT8I','00TV8H55BU243CFAFK9O9GKL5P','','部门管理-列表','','F',NULL,12201,'1','system/dept/list','GET','','1','1','1','1','0','0','部门管理-列表','2022-03-03 13:01:19',NULL,NULL),
+('00VRU0G3MI3LU7TFKJ08OQIT8I','00VS0T54CT6VS5HMHI7N8SQIEO','','部门管理-列表','','F',NULL,12201,'1','system/dept/list','GET','','1','1','1','1','0','0','部门管理-列表','2022-03-03 13:01:19','2022-04-01 18:08:24',NULL),
 ('00VRU2G6ULR1E2L9Q33PV4L87V','00TV8HV6G76KBTOJ74AM5BPFS1','','岗位管理-列表','','F',NULL,12301,'1','system/post/list','GET','','1','1','1','1','0','0','岗位管理-列表','2022-03-03 13:03:31',NULL,NULL),
 ('00VRU3JDE3CFU6MLPTG2SS56CE','00TV8HV6G76KBTOJ74AM5BPFS1','','岗位管理-详情','','F',NULL,12302,'1','system/post/get_by_id','GET','','1','1','1','1','0','0','岗位管理-详情','2022-03-03 13:04:43',NULL,NULL),
 ('00VRU46HO45KUJTQF0R6N3H7N1','00TV8HV6G76KBTOJ74AM5BPFS1','','岗位管理-新增','','F',NULL,12303,'1','system/post/add','POST','','1','1','1','1','0','0','岗位管理-新增','2022-03-03 13:05:22',NULL,NULL),
 ('00VRU4SCKU568QL7S9F6K0M913','00TV8HV6G76KBTOJ74AM5BPFS1','','岗位管理-编辑','','F',NULL,12304,'1','system/post/edit','PUT','','1','1','1','1','0','0','岗位管理-编辑','2022-03-03 13:06:07',NULL,NULL),
 ('00VRU5E4E2U47VP7NKER84ANSV','00TV8HV6G76KBTOJ74AM5BPFS1','','岗位管理-删除','','F',NULL,12305,'1','system/post/delete','DELETE','','1','1','1','1','0','0','岗位管理-删除','2022-03-03 13:06:43',NULL,NULL),
-('00VRU6SNSR3JKQEJPV42P1TO43','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-列表','','F',NULL,12401,'1','system/role/list','GET','','1','1','1','1','0','0','角色管理-列表','2022-03-03 13:08:19',NULL,NULL),
+('00VRU6SNSR3JKQEJPV42P1TO43','00VS0T54CT6VS5HMHI7N8SQIEO','','角色管理-列表','','F',NULL,12401,'1','system/role/list','GET','','1','1','1','1','0','0','角色管理-列表','2022-03-03 13:08:19','2022-04-01 18:07:43',NULL),
 ('00VRU90LRQ009Q85FNKDHDCF2K','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-详情','','F',NULL,12402,'1','system/role/get_by_id','GET','','1','1','1','1','0','0','角色管理-详情','2022-03-03 13:10:38',NULL,NULL),
 ('00VRU9IHUV512BR8ACOPNVJOEL','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-新增','','F',NULL,12403,'1','system/role/add','POST','','1','1','1','1','0','0','角色管理-新增','2022-03-03 13:11:14',NULL,NULL),
 ('00VRUA27HG6K7PULSJHEPTK0C7','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-编辑','','F',NULL,12404,'1','system/role/edit','PUT','','1','1','1','1','0','0','角色管理-编辑','2022-03-03 13:11:46',NULL,NULL),
@@ -96,8 +96,8 @@ insert  into `sys_menu`(`id`,`pid`,`path`,`menu_name`,`icon`,`menu_type`,`query`
 ('00VRUCU8AJLU73U2KLRPH0PB4T','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-删除','','F',NULL,12407,'1','system/role/delete','DELETE','','1','1','1','1','0','0','角色管理-删除','2022-03-03 13:14:55',NULL,NULL),
 ('00VRUDODNR5QPREQI9T3S34MS0','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-取消授权','','F',NULL,12408,'1','system/role/cancel_auth_user','PUT','','1','1','1','1','0','0','角色管理-取消授权','2022-03-03 13:15:48',NULL,NULL),
 ('00VRUEC8OUNJP7TQ1D0Q4AELAL','00TV8FT34RNV9T5PUSHHOVF56R','','角色管理-授权用户','','F',NULL,12409,'1','system/role/add_auth_user','PUT','','1','1','1','1','0','0','角色管理-授权用户','2022-03-03 13:16:29',NULL,NULL),
-('00VRVR9A52P9NSTL4VA6A6CGDA','00VS0T54CT6VS5HMHI7N8SQIEO','','用户信息','','F',NULL,99102,'1','system/user/get_info','GET','','1','1','1','1','0','0','用户信息','2022-03-03 14:05:32','2022-03-03 14:45:30',NULL),
-('00VRVS1VPSVAKUNVTMHGOTJA79','00VS0T54CT6VS5HMHI7N8SQIEO','','获取路由','','F',NULL,99101,'1','system/menu/get_routers','GET','','1','1','1','1','0','0','获取路由','2022-03-03 14:06:23','2022-03-03 14:44:40',NULL),
+('00VRVR9A52P9NSTL4VA6A6CGDA','00VS0T54CT6VS5HMHI7N8SQIEO','','用户信息','','F',NULL,99102,'1','system/user/get_info','GET','','1','1','1','1','0','0','用户信息','2022-03-03 14:05:32','2022-03-16 11:46:02',NULL),
+('00VRVS1VPSVAKUNVTMHGOTJA79','00VS0T54CT6VS5HMHI7N8SQIEO','','获取路由','','F',NULL,99101,'1','system/menu/get_routers','GET','','1','1','1','1','0','0','获取路由','2022-03-03 14:06:23','2022-03-16 11:46:07',NULL),
 ('00VS0T54CT6VS5HMHI7N8SQIEO','0','M-A','必须权限','404','M',NULL,99100,'1','S-must-enabled','0','','0','1','1','1','0','0','用户必须权限，一般必须授权','2022-03-03 14:42:32','2022-03-06 13:09:50',NULL),
 ('00VS10Q4OB6LMC1PE1H4G0J96F','0','M-B','前端按钮权限','404','M',NULL,99200,'1','S-button','button','','0','1','1','1','0','0','前端按钮权限','2022-03-03 14:46:31','2022-03-06 13:09:43',NULL),
 ('00VS2I9FVAFCEF4CLL2UIIP373','00TV8ENLC2DL61K03MS9LT04F3','','用户-状态更改','','F',NULL,12115,'1','system/user/change_status','PUT','','1','1','1','1','0','0','用户-状态更改','2022-03-03 15:40:34',NULL,NULL),
@@ -108,7 +108,8 @@ insert  into `sys_menu`(`id`,`pid`,`path`,`menu_name`,`icon`,`menu_type`,`query`
 ('00VVUL5R74RNERJGKTC9OQM0GF','00UVPJ8H374OKE77M4EBTHOGIV','','权限查询-数据库关联修改','','F',NULL,11603,'1','system/api_db/add','POST','','1','1','1','1','0','0','权限查询-数据库关联修改','2022-03-06 15:57:50',NULL,NULL),
 ('0100TVEON187DJPSHN1F8P8CC2','00VS0T54CT6VS5HMHI7N8SQIEO','','获取全部激活菜单树','','F',NULL,99103,'1','system/menu/get_all_enabled_menu_tree','GET','','1','1','1','1','0','0','获取全部激活菜单树A','2022-03-07 10:12:36','2022-03-07 10:17:42',NULL),
 ('01054NOSI7GEC0F8JDB6KEDPEL','00UDF1SCLDT1FESNLIRG0IVD3B','server','服务监控','server','C',NULL,66000,'1','M-monitor-server','','monitor/server/index','1','1','1','1','0','0','服务监控','2022-03-10 16:42:47','2022-03-10 21:08:39',NULL),
-('01054P7OBFVI0UH5MSL07RG439','01054NOSI7GEC0F8JDB6KEDPEL','','服务监控-信息获取','','F',NULL,65001,'1','system/monitor/server','GET','','1','1','0','0','0','0','服务监控-信息获取','2022-03-10 16:44:23',NULL,NULL);
+('01054P7OBFVI0UH5MSL07RG439','01054NOSI7GEC0F8JDB6KEDPEL','','服务监控-信息获取','','F',NULL,65001,'1','system/monitor/server','GET','','1','1','0','0','0','0','服务监控-信息获取','2022-03-10 16:44:23',NULL,NULL),
+('0111I88S2UPB7GDGSEMJLF3A7Q','00VS0T54CT6VS5HMHI7N8SQIEO','','用户-切换部门','','F',NULL,12111,'1','system/user/change_dept','PUT','','1','1','1','1','0','0','用户-切换部门','2022-04-01 18:32:40',NULL,NULL);
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
